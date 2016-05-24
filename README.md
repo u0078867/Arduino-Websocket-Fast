@@ -36,11 +36,11 @@ The optimized code was tested for:
 
 We were able to obtain to reach the target throughput indicated above, with a message length of around 70 bytes (\*):
 
-(\*) In order to reeach that speed, we had to apply the following hack:
+(\*) In order to reach that speed, we had to apply the following hack:
 
 1. <https://gist.github.com/u0078867/9df30eb7da64d8f43422faa70b1a9e52>
 
-   We did not want to get the `loop()` stuck if the TCP message was not sent (via WiFi), and we could afford some data lost randomly; although, we wanted our data to be reliable on the server side, so we excluded UDP packets.
+   We did not want to get the `loop()` stuck if the TCP message was not sent (via WiFi), and we could afford some data lost randomly; although, we wanted our data to be reliable and in time order on the server side, so we excluded UDP packets.
 
 2. After point 1, we had to manually disable the mask flag for websocket messages, by replacing this line in src /WebSocketClient.h:
 
