@@ -56,6 +56,10 @@ We were able to obtain to reach the target throughput indicated above, with a me
 
    This modification disables the message mask, which normally is **compulsory**. `ws` tolerates it however.
 
+### MCU compatibility
+- Tested: Arduino UNO, ZERO
+- Not tested: Arduino DUE; howerer, by searching similar C++ repos on GitHub (`arduino websocket due in:readme,name,description fork:true`), it seems that the conditional inclusion (in src/sha1.cpp) of `#include <avr/io.h>` and `#include <avr/pgmspace.h>` needed for ZERO board, would also fix compilation for DUE board. Any good-soul tester is welcome to feedback.
+
 ### Notes
 See the original code from Branden for additional notes.
 
