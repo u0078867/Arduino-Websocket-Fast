@@ -81,7 +81,7 @@ http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75
 #define WS_OPCODE_PONG    0x0a
 // Second byte
 #define WS_MASK           0x80
-//#define WS_MASK           0x00  // if disabled (0x00) it might fasten sending
+//#define WS_MASK           0x00
 #define WS_SIZE16         126
 #define WS_SIZE64         127
 
