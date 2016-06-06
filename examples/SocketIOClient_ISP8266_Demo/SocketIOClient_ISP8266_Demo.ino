@@ -74,7 +74,7 @@ void loop() {
 
     uint64_t now = millis();
 
-    if(now - messageTimestamp > INTERVAL) {
+    if(now - messageTimestamp > MESSAGE_INTERVAL) {
         messageTimestamp = now;
         // capture the value of analog 1, send it along
         pinMode(1, INPUT);
