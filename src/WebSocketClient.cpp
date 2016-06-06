@@ -7,9 +7,11 @@
 #include "base64.h"
 
 
-bool WebSocketClient::handshake(Client &client) {
+bool WebSocketClient::handshake(Client &client, bool socketio) {
 
     socket_client = &client;
+    issocketio = socketio;
+    strcpy(sid, "");
 
     // If there is a connected client->
     if (socket_client->connected()) {
@@ -17,6 +19,10 @@ bool WebSocketClient::handshake(Client &client) {
 #ifdef DEBUGGING
             Serial.println(F("Client connected"));
 #endif
+        if (issocketio && strlen(sid) == 0) {
+            analyzeRequest();
+        }
+
         if (analyzeRequest()) {
 #ifdef DEBUGGING
                 Serial.println(F("Websocket established"));
@@ -43,43 +49,63 @@ bool WebSocketClient::analyzeRequest() {
 
     int bite;
     bool foundupgrade = false;
+    bool foundsid = false;
     unsigned long intkey[2];
     String serverKey;
     char keyStart[17];
     char b64Key[25];
     String key = "------------------------";
 
-    randomSeed(analogRead(0));
-
-    for (int i=0; i<16; ++i) {
-        keyStart[i] = (char)random(1, 256);
-    }
-
-    base64_encode(b64Key, keyStart, 16);
-
-    for (int i=0; i<24; ++i) {
-        key[i] = b64Key[i];
-    }
+    if (!issocketio || (issocketio && strlen(sid) > 0)) {
 
 #ifdef DEBUGGING
     Serial.println(F("Sending websocket upgrade headers"));
 #endif
 
-    socket_client->print(F("GET "));
-    socket_client->print(path);
-    socket_client->print(F(" HTTP/1.1\r\n"));
-    socket_client->print(F("Upgrade: websocket\r\n"));
-    socket_client->print(F("Connection: Upgrade\r\n"));
+        randomSeed(analogRead(0));
+
+        for (int i=0; i<16; ++i) {
+            keyStart[i] = (char)random(1, 256);
+        }
+
+        base64_encode(b64Key, keyStart, 16);
+
+        for (int i=0; i<24; ++i) {
+            key[i] = b64Key[i];
+        }
+
+        socket_client->print(F("GET "));
+        socket_client->print(path);
+        if (issocketio) {
+            socket_client->print(F("socket.io/?EIO=3&transport=websocket&sid="));
+            socket_client->print(sid);
+        }
+        socket_client->print(F(" HTTP/1.1\r\n"));
+        socket_client->print(F("Upgrade: websocket\r\n"));
+        socket_client->print(F("Connection: Upgrade\r\n"));
+        socket_client->print(F("Sec-WebSocket-Key: "));
+        socket_client->print(key);
+        socket_client->print(CRLF);
+        socket_client->print(F("Sec-WebSocket-Protocol: "));
+        socket_client->print(protocol);
+        socket_client->print(CRLF);
+        socket_client->print(F("Sec-WebSocket-Version: 13\r\n"));
+
+    } else {
+
+#ifdef DEBUGGING
+    Serial.println(F("Sending socket.io session request headers"));
+#endif
+
+        socket_client->print(F("GET "));
+        socket_client->print(path);
+        socket_client->print(F("socket.io/?EIO=3&transport=polling HTTP/1.1\r\n"));
+        socket_client->print(F("Connection: keep-alive\r\n"));
+    }
+
     socket_client->print(F("Host: "));
     socket_client->print(host);
     socket_client->print(CRLF);
-    socket_client->print(F("Sec-WebSocket-Key: "));
-    socket_client->print(key);
-    socket_client->print(CRLF);
-    socket_client->print(F("Sec-WebSocket-Protocol: "));
-    socket_client->print(protocol);
-    socket_client->print(CRLF);
-    socket_client->print(F("Sec-WebSocket-Version: 13\r\n"));
     socket_client->print(CRLF);
 
 #ifdef DEBUGGING
@@ -104,6 +130,10 @@ bool WebSocketClient::analyzeRequest() {
                 foundupgrade = true;
             } else if (temp.startsWith("Sec-WebSocket-Accept: ")) {
                 serverKey = temp.substring(22,temp.length() - 2); // Don't save last CR+LF
+            } else if (!foundsid && temp.startsWith("Set-Cookie: ")) {
+                foundsid = true;
+                String tempsid = temp.substring(temp.indexOf("=") + 1, temp.length() - 2); // Don't save last CR+LF
+                strcpy(sid, tempsid.c_str());
             }
             temp = "";
         }
@@ -111,6 +141,10 @@ bool WebSocketClient::analyzeRequest() {
         if (!socket_client->available()) {
           delay(20);
         }
+    }
+
+    if (issocketio && foundsid && !foundupgrade) {
+        return true;
     }
 
     key += "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -347,6 +381,7 @@ void WebSocketClient::disconnectStream() {
     socket_client->flush();
     delay(10);
     socket_client->stop();
+    strcpy(sid, "");
 }
 
 bool WebSocketClient::getData(String& data, uint8_t *opcode) {

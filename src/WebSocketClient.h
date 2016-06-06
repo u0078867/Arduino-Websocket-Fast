@@ -91,7 +91,7 @@ public:
 
     // Handle connection requests to validate and process/refuse
     // connections.
-    bool handshake(Client &client);
+    bool handshake(Client &client, bool socketio = false);
 
     // Get data off of the stream
     bool getData(String& data, uint8_t *opcode = NULL);
@@ -101,12 +101,15 @@ public:
     void sendData(const char *str, uint8_t opcode = WS_OPCODE_TEXT, bool fast = true);
     void sendData(String str, uint8_t opcode = WS_OPCODE_TEXT, bool fast = true);
 
+    bool issocketio;
     char *path;
     char *host;
     char *protocol;
 
 private:
     Client *socket_client;
+    // socket.io session id
+    char sid[32];
     unsigned long _startMillis;
 
     const char *socket_urlPrefix;
