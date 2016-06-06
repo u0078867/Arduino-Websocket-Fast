@@ -98,16 +98,14 @@ void loop() {
       Serial.println(data);
     }
 
-    // capture the value of analog 1, send it along
-    pinMode(1, INPUT);
-    data = String(analogRead(1));
-
-    webSocketClient.sendData(data);
-
     uint64_t now = millis();
 
     if(now - messageTimestamp > INTERVAL) {
         messageTimestamp = now;
+        // capture the value of analog 1, send it along
+        pinMode(1, INPUT);
+        data = String(analogRead(1));
+
         // example socket.io message with type "messageType" and JSON payload
         char message[128];
         sprintf(message, "42[\"messageType\",{\"data\":\"%s\"}]", data.c_str());
