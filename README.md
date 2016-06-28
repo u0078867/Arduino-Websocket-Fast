@@ -41,6 +41,7 @@ We were able to obtain to reach the target throughput indicated above, with a me
 1. <https://gist.github.com/u0078867/9df30eb7da64d8f43422faa70b1a9e52>
 
    We did not want to get the `loop()` stuck if the TCP message was not sent (via WiFi), and we could afford some data lost randomly; although, we wanted our data to be reliable and in time order on the server side, so we excluded UDP packets.
+   However, when the message rate you want to have is high, then some TCP packets could be lost (data or ACK); in this case, TCP fast-retransmit might not always be triggered, and this might increase the wait time for next packet to arrive. In this case, UDP protocol is strongly suggested.
 
 2. After point 1, we had to manually disable the mask flag for websocket messages, by replacing this line in src /WebSocketClient.h:
 
