@@ -91,6 +91,27 @@ bool WebSocketClient::analyzeRequest() {
         socket_client->print(CRLF);
         socket_client->print(F("Sec-WebSocket-Version: 13\r\n"));
 
+#ifdef DEBUGGING
+        Serial.println("Printing websocket upgrade headers");
+        Serial.print(F("GET "));
+        Serial.print(path);
+        if (issocketio) {
+            socket_client->print(F("socket.io/?EIO=3&transport=websocket&sid="));
+            socket_client->print(sid);
+        }
+        Serial.print(F(" HTTP/1.1\r\n"));
+        Serial.print(F("Upgrade: websocket\r\n"));
+        Serial.print(F("Connection: Upgrade\r\n"));
+        Serial.print(F("Sec-WebSocket-Key: "));
+        Serial.print(key);
+        Serial.print(CRLF);
+        Serial.print(F("Sec-WebSocket-Protocol: "));
+        Serial.print(protocol);
+        Serial.print(CRLF);
+        Serial.print(F("Sec-WebSocket-Version: 13\r\n"));
+#endif
+
+
     } else {
 
 #ifdef DEBUGGING
@@ -123,17 +144,28 @@ bool WebSocketClient::analyzeRequest() {
         temp += (char)bite;
 
         if ((char)bite == '\n') {
+            String tempLC = temp;
+            tempLC.toLowerCase(); // uses case-insensitive header string for parsing to ensure to catch response from servers using different upper/lowercase variants of headers
 #ifdef DEBUGGING
             Serial.print("Got Header: " + temp);
 #endif
-            if (!foundupgrade && temp.startsWith("Upgrade: websocket")) {
+            if (!foundupgrade && tempLC.startsWith("upgrade: websocket")) {
                 foundupgrade = true;
-            } else if (temp.startsWith("Sec-WebSocket-Accept: ")) {
+            } else if (tempLC.startsWith("sec-websocket-accept: ")) {
                 serverKey = temp.substring(22,temp.length() - 2); // Don't save last CR+LF
-            } else if (!foundsid && temp.startsWith("Set-Cookie: ")) {
-                foundsid = true;
-                String tempsid = temp.substring(temp.indexOf("=") + 1, temp.length() - 2); // Don't save last CR+LF
-                strcpy(sid, tempsid.c_str());
+            } else if (!foundsid && tempLC.startsWith("set-cookie: ")) {
+                 foundsid = true;
+                 if (temp.indexOf(";") == -1){ // looks for ";" in cookie header, which indicates more than one cookie value
+                   String tempsid = temp.substring(temp.indexOf("=") + 1, temp.length() - 2); // Don't save last CR+LF
+                 }
+                 else {
+                   String tempsid = temp.substring(temp.indexOf("=") + 1, temp.indexOf(";")); // assumes sid is first cookie value, discards all other values
+                 }
+                 strcpy(sid, tempsid.c_str());
+                 #ifdef DEBUGGING
+                    Serial.println("Parsing Set-Cookie...");
+                    Serial.println("tempsid: " + tempsid);
+                #endif
             }
             temp = "";
         }
