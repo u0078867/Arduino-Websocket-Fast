@@ -155,11 +155,12 @@ bool WebSocketClient::analyzeRequest() {
                 serverKey = temp.substring(22,temp.length() - 2); // Don't save last CR+LF
             } else if (!foundsid && tempLC.startsWith("set-cookie: ")) {
                  foundsid = true;
+                 String tempsid;
                  if (temp.indexOf(";") == -1){ // looks for ";" in cookie header, which indicates more than one cookie value
-                   String tempsid = temp.substring(temp.indexOf("=") + 1, temp.length() - 2); // Don't save last CR+LF
+                   tempsid = temp.substring(temp.indexOf("=") + 1, temp.length() - 2); // Don't save last CR+LF
                  }
                  else {
-                   String tempsid = temp.substring(temp.indexOf("=") + 1, temp.indexOf(";")); // assumes sid is first cookie value, discards all other values
+                   tempsid = temp.substring(temp.indexOf("=") + 1, temp.indexOf(";")); // assumes sid is first cookie value, discards all other values
                  }
                  strcpy(sid, tempsid.c_str());
                  #ifdef DEBUGGING
