@@ -1,4 +1,4 @@
-//#define DEBUGGING
+#define DEBUGGING
 
 #include "global.h"
 #include "WebSocketClient.h"
