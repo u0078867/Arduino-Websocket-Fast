@@ -44,6 +44,19 @@ bool WebSocketClient::handshake(Client &client, bool socketio) {
     }
 }
 
+/*
+ * Find Case Insensitive Sub String in a given substring
+ */
+bool WebSocketClient::startsWithCaseInsensitive(String data, String toSearch)
+{
+    // Convert complete given String to lower case
+    data.toLowerCase();
+    // Convert complete given Sub String to lower case
+    toSearch.toLowerCase();
+    // Find sub string in given string
+    return data.startsWith(toSearch);
+}
+
 bool WebSocketClient::analyzeRequest() {
     String temp;
 
@@ -126,11 +139,11 @@ bool WebSocketClient::analyzeRequest() {
 #ifdef DEBUGGING
             Serial.print("Got Header: " + temp);
 #endif
-            if (!foundupgrade && temp.startsWith("Upgrade: websocket")) {
+            if (!foundupgrade && startsWithCaseInsensitive(temp, "Upgrade: websocket")) {
                 foundupgrade = true;
-            } else if (temp.startsWith("Sec-WebSocket-Accept: ")) {
+            } else if (startsWithCaseInsensitive(temp, "Sec-WebSocket-Accept: ")) {
                 serverKey = temp.substring(22,temp.length() - 2); // Don't save last CR+LF
-            } else if (!foundsid && temp.startsWith("Set-Cookie: ")) {
+            } else if (!foundsid && startsWithCaseInsensitive(temp, "Set-Cookie: ")) {
                 foundsid = true;
                 String tempsid = temp.substring(temp.indexOf("=") + 1, temp.length() - 2); // Don't save last CR+LF
                 strcpy(sid, tempsid.c_str());

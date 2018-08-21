@@ -118,6 +118,7 @@ private:
     // websocket connection.
     bool analyzeRequest();
 
+    bool startsWithCaseInsensitive(String data, String toSearch);
     bool handleStream(String& data, uint8_t *opcode);
     bool handleStream(char *data, uint8_t *opcode);
 
